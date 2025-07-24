@@ -8,6 +8,8 @@ from django.db import models
 
 "SELECT 1 FROM posts WHERE id; = 1 --» Post.objects.get(id = 1)"
 
+"INSERT INTO posts (title, content, rate, category_id) VALUES('new post', 'new content', 0, 1); --> Post.objects.create(title = 'new post', content = 'new content', rate = 0, category_id = 1)"
+
 class Category(models.Model):
     name = models.CharField(max_length = 256)
 
