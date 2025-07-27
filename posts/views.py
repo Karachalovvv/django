@@ -1,7 +1,8 @@
 from django.shortcuts import render, HttpResponse, redirect
 from posts.models import Post
-from posts.forms import PostForm
+from posts.forms import PostForm, CreateForm, SearchForm
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 def home(request):
     if request.method == "GET":
@@ -9,11 +10,34 @@ def home(request):
     else:
         return HttpResponse("Hello, world. You're at thepolis index")
 
-@login_required(login_url = "/login")
+@login_required(login_url="/login")
 def post_list_view(request):
-    if request.method == "GET":
-        posts = Post.objects.all()
-        return render(request, "posts/post_list.html", context = {"posts": posts})
+    limit = 3
+    form = SearchForm()
+    posts = Post.objects.all()
+    search = request.GET.get("search")
+    category_id = request.GET.get("category_id")
+    tags = request.GET.get("tags")
+    ordering = request.GET.get("ordering")
+    page = request.GET.get("page", 1)
+    if search:
+        posts = posts.filter(Q(title__icontains=search) | Q(content__icontains=search))
+    if category_id:
+        posts = posts.filter(category_id=int(category_id))
+    if tags:
+        posts = posts.filter(tags=int(tags))
+    if ordering:
+        posts = posts.order_by(ordering)
+    max_pages = posts.count() / limit
+    if round(max_pages) < max_pages:
+        max_pages = round(max_pages + 1)
+    else:
+        max_pages = round(max_pages)
+    start = (int(page) - 1) * limit
+    end = int(page) * limit
+    posts = posts[start:end]
+
+    return render(request, "posts/post_list.html", context={"posts": posts, "form": form, "max_pages": range(1, max_pages + 1)})
 
 @login_required(login_url = "/login")
 def post_detail_view(request, post_id):
